@@ -1,0 +1,79 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { Home, User, FileText, X } from "lucide-react"
+
+interface SidebarProps {
+  onClose?: () => void
+  onHistoryClick: () => void
+  onProfileClick: () => void
+}
+
+export function Sidebar({ onClose, onHistoryClick, onProfileClick }: SidebarProps) {
+  const handleItemClick = (item: string, href: string) => {
+    if (item === "History") {
+      onHistoryClick()
+    } else if (item === "Profile") {
+      onProfileClick()
+    } else if (href !== "#") {
+      window.location.href = href
+    }
+  }
+
+  const menuItems = [
+    { icon: Home, label: "Dashboard", href: "/dashboard", active: true },
+    { icon: FileText, label: "History", href: "#" },
+    { icon: User, label: "Profile", href: "#" },
+  ]
+
+  return (
+    <div className="flex flex-col h-full bg-card border-r">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">D</span>
+          </div>
+          <span className="font-semibold">Dashboard</span>
+        </div>
+        {onClose && (
+          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
+            <X className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4">
+        <ul className="space-y-2">
+          {menuItems.map((item) => (
+            <li key={item.label}>
+              <Button
+                variant={item.active ? "secondary" : "ghost"}
+                className="w-full justify-start gap-3"
+                onClick={() => handleItemClick(item.label, item.href)}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" asChild>
+            <a href="/">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </a>
+          </Button>
+          <ThemeToggle />
+        </div>
+      </div>
+    </div>
+  )
+}
