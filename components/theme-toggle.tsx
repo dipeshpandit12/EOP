@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 
 export function ThemeToggle() {
   const [mounted, setMounted] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { theme, setTheme, resolvedTheme } = useTheme()
 
   useEffect(() => {

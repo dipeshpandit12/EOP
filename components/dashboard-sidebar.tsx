@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Home, User, FileText, X } from "lucide-react"
+import Link from 'next/link'
 
 interface SidebarProps {
   onClose?: () => void
@@ -66,10 +67,10 @@ export function Sidebar({ onClose, onHistoryClick, onProfileClick }: SidebarProp
       <div className="p-4 border-t">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" asChild>
-            <a href="/">
+            <Link href="/">
               <Home className="h-4 w-4 mr-2" />
               Home
-            </a>
+            </Link>
           </Button>
           <ThemeToggle />
         </div>
