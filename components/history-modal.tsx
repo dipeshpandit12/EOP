@@ -100,7 +100,7 @@ export function HistoryModal({ open, onOpenChange }: HistoryModalProps) {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(chat.date).toLocaleDateString()}
+                        {chat.date}
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
