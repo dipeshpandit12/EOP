@@ -4,8 +4,8 @@ import { useState, useCallback } from 'react'
 // In production (Vercel), use the proxy endpoint
 // In development, use the direct API endpoint
 const API_ENDPOINT = process.env.NODE_ENV === 'production' 
-  ? '/api/proxy/chat'  // Use proxy in production to avoid CORS issues
-  : '/api/chat';       // Use direct API route in development
+  ? '/api/proxy-new/chat'  // Use proxy in production to avoid CORS issues
+  : '/api/chat';           // Use direct API route in development
 
 interface ChatMessage {
   id?: string
