@@ -1,5 +1,11 @@
 import { useState, useCallback } from 'react'
 
+// Define API endpoints
+const API_ENDPOINTS = {
+  primary: '/api/chat',
+  fallback: 'http://localhost:8000/chat'
+}
+
 interface ChatMessage {
   id?: string
   message: string
@@ -19,6 +25,7 @@ interface ChatResponse {
 export function useChatAPI() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [usedFallbackApi, setUsedFallbackApi] = useState(false)
 
   const sendMessage = useCallback(async (messageData: string | Record<string, unknown>, conversationId?: string): Promise<ChatResponse> => {
     setIsLoading(true)
@@ -52,68 +59,100 @@ export function useChatAPI() {
       }
     }
 
-    console.log('[useChatAPI] Sending request:', {
-      url: '/api/chat',
-      method: 'POST',
-      data: requestData,
-      timestamp: new Date().toISOString()
-    })
+    // Try primary API first, then fallback to localhost if needed
+    const tryApiEndpoint = async (endpoint: string, isRetry: boolean = false): Promise<ChatResponse> => {
+      console.log(`[useChatAPI] ${isRetry ? 'Retrying with fallback' : 'Sending request'}:`, {
+        url: endpoint,
+        method: 'POST',
+        data: requestData,
+        timestamp: new Date().toISOString()
+      })
+
+      try {
+        const startTime = Date.now()
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData)
+        })
+
+        const endTime = Date.now()
+        
+        console.log('[useChatAPI] Response received:', {
+          endpoint,
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          responseTime: `${endTime - startTime}ms`,
+          headers: Object.fromEntries(response.headers.entries()),
+          timestamp: new Date().toISOString()
+        })
+
+        if (!response.ok) {
+          let errorDetail = `HTTP ${response.status}`
+          try {
+            const errorData = await response.json()
+            errorDetail = errorData.error || errorDetail
+            console.error('[useChatAPI] Error response body:', errorData)
+          } catch (parseError) {
+            console.error('[useChatAPI] Failed to parse error response:', parseError)
+          }
+          throw new Error(`Failed to send message: ${errorDetail}`)
+        }
+
+        const result = await response.json()
+        
+        console.log('[useChatAPI] Success response:', {
+          endpoint,
+          result,
+          timestamp: new Date().toISOString()
+        })
+        
+        if (isRetry) {
+          setUsedFallbackApi(true)
+        }
+        
+        return result
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
+        
+        console.error('[useChatAPI] Request failed:', {
+          endpoint,
+          error: errorMessage,
+          originalError: err,
+          requestData,
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!isRetry) {
+          // If this was the primary endpoint, throw to trigger fallback
+          throw err
+        }
+        
+        // If this was already the fallback endpoint, set error and rethrow
+        setError(errorMessage)
+        throw new Error(errorMessage)
+      }
+    }
 
     try {
-      const startTime = Date.now()
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-      })
-
-      const endTime = Date.now()
-      
-      console.log('[useChatAPI] Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        responseTime: `${endTime - startTime}ms`,
-        headers: Object.fromEntries(response.headers.entries()),
-        timestamp: new Date().toISOString()
-      })
-
-      if (!response.ok) {
-        let errorDetail = `HTTP ${response.status}`
-        try {
-          const errorData = await response.json()
-          errorDetail = errorData.error || errorDetail
-          console.error('[useChatAPI] Error response body:', errorData)
-        } catch (parseError) {
-          console.error('[useChatAPI] Failed to parse error response:', parseError)
-        }
-        throw new Error(`Failed to send message: ${errorDetail}`)
+      // Try primary endpoint first
+      return await tryApiEndpoint(API_ENDPOINTS.primary)
+    } catch {
+      console.log('[useChatAPI] Primary endpoint failed, trying fallback...')
+      try {
+        // If primary fails, try fallback
+        return await tryApiEndpoint(API_ENDPOINTS.fallback, true)
+      } catch (fallbackError) {
+        // Both endpoints failed
+        const errorMessage = fallbackError instanceof Error ? fallbackError.message : 'Failed to send message on both primary and fallback endpoints'
+        setError(errorMessage)
+        throw new Error(errorMessage)
+      } finally {
+        setIsLoading(false)
       }
-
-      const result = await response.json()
-      
-      console.log('[useChatAPI] Success response:', {
-        result,
-        timestamp: new Date().toISOString()
-      })
-      
-      return result
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
-      
-      console.error('[useChatAPI] Request failed:', {
-        error: errorMessage,
-        originalError: err,
-        requestData,
-        timestamp: new Date().toISOString()
-      })
-      
-      setError(errorMessage)
-      throw new Error(errorMessage)
-    } finally {
-      setIsLoading(false)
     }
   }, [])
 
@@ -121,25 +160,66 @@ export function useChatAPI() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      const params = new URLSearchParams()
-      if (conversationId) params.append('conversation_id', conversationId)
-      if (limit) params.append('limit', limit.toString())
+    const params = new URLSearchParams()
+    if (conversationId) params.append('conversation_id', conversationId)
+    if (limit) params.append('limit', limit.toString())
 
-      const response = await fetch(`/api/chat?${params.toString()}`)
+    const fetchHistory = async (endpoint: string, isRetry: boolean = false): Promise<ChatMessage[]> => {
+      try {
+        console.log(`[useChatAPI] ${isRetry ? 'Retrying with fallback' : 'Fetching history'}:`, {
+          url: `${endpoint}?${params.toString()}`,
+          timestamp: new Date().toISOString()
+        })
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch chat history: ${response.status}`)
+        const response = await fetch(`${endpoint}?${params.toString()}`)
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch chat history: ${response.status}`)
+        }
+
+        const result = await response.json()
+        
+        if (isRetry) {
+          setUsedFallbackApi(true)
+        }
+        
+        return result.messages || result || []
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch chat history'
+        
+        console.error('[useChatAPI] History fetch failed:', {
+          endpoint,
+          error: errorMessage,
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!isRetry) {
+          // If this was the primary endpoint, throw to trigger fallback
+          throw err
+        }
+        
+        // If this was already the fallback endpoint, set error and rethrow
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
+    }
 
-      const result = await response.json()
-      return result.messages || result || []
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch chat history'
-      setError(errorMessage)
-      throw new Error(errorMessage)
-    } finally {
-      setIsLoading(false)
+    try {
+      // Try primary endpoint first
+      return await fetchHistory(API_ENDPOINTS.primary)
+    } catch {
+      console.log('[useChatAPI] Primary endpoint failed, trying fallback for history...')
+      try {
+        // If primary fails, try fallback
+        return await fetchHistory(API_ENDPOINTS.fallback, true)
+      } catch (fallbackErr) {
+        // Both endpoints failed
+        const errorMessage = fallbackErr instanceof Error ? fallbackErr.message : 'Failed to fetch chat history on both endpoints'
+        setError(errorMessage)
+        throw new Error(errorMessage)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }, [])
 
@@ -151,53 +231,96 @@ export function useChatAPI() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          conversation_id: conversationId,
-          stream: true,
+    const requestData = {
+      message,
+      conversation_id: conversationId,
+      stream: true,
+      timestamp: new Date().toISOString()
+    }
+
+    const streamFromEndpoint = async (endpoint: string, isRetry: boolean = false): Promise<void> => {
+      try {
+        console.log(`[useChatAPI] ${isRetry ? 'Retrying streaming with fallback' : 'Streaming from'}:`, {
+          url: endpoint,
+          data: requestData,
           timestamp: new Date().toISOString()
         })
-      })
 
-      if (!response.ok) {
-        throw new Error(`Failed to stream message: ${response.status}`)
-      }
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData)
+        })
 
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No response body reader available')
-      }
+        if (!response.ok) {
+          throw new Error(`Failed to stream message: ${response.status}`)
+        }
 
-      const decoder = new TextDecoder()
-      let buffer = ''
+        const reader = response.body?.getReader()
+        if (!reader) {
+          throw new Error('No response body reader available')
+        }
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const chunk = line.slice(6)
-            if (chunk.trim() && onChunk) {
-              onChunk(chunk)
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const chunk = line.slice(6)
+              if (chunk.trim() && onChunk) {
+                onChunk(chunk)
+              }
             }
           }
         }
+        
+        if (isRetry) {
+          setUsedFallbackApi(true)
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to stream message'
+        
+        console.error('[useChatAPI] Streaming failed:', {
+          endpoint,
+          error: errorMessage,
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!isRetry) {
+          // If this was the primary endpoint, throw to trigger fallback
+          throw err
+        }
+        
+        // If this was already the fallback endpoint, set error and rethrow
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to stream message'
-      setError(errorMessage)
-      throw new Error(errorMessage)
+    }
+
+    try {
+      // Try primary endpoint first
+      await streamFromEndpoint(API_ENDPOINTS.primary)
+    } catch {
+      console.log('[useChatAPI] Primary endpoint streaming failed, trying fallback...')
+      try {
+        // If primary fails, try fallback
+        await streamFromEndpoint(API_ENDPOINTS.fallback, true)
+      } catch (fallbackError) {
+        // Both endpoints failed
+        const errorMessage = fallbackError instanceof Error ? fallbackError.message : 'Failed to stream message on both endpoints'
+        setError(errorMessage)
+        throw new Error(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -209,6 +332,8 @@ export function useChatAPI() {
     streamMessage,
     isLoading,
     error,
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    usedFallbackApi,
+    resetFallbackStatus: () => setUsedFallbackApi(false)
   }
 }
