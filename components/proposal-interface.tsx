@@ -5,21 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { useEOPChat } from "@/hooks/useEOPChat"
 import { 
   FileText, 
-  CheckCircle, 
   Clock, 
   AlertTriangle,
-  Edit3,
-  Save,
-  Plus,
   MapPin,
   Shield,
   Check,
-  Circle
 } from "lucide-react"
 
 interface ProposalInterfaceProps {
@@ -37,7 +30,6 @@ interface Step {
 
 export function ProposalInterface({ className }: ProposalInterfaceProps) {
   const { getCurrentProposal, getProposalProgress } = useEOPChat()
-  const [editMode, setEditMode] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   
   const currentProposal = getCurrentProposal()
@@ -125,171 +117,20 @@ export function ProposalInterface({ className }: ProposalInterfaceProps) {
   const renderTribalInfoStep = () => (
     <div className="space-y-6">
       {/* Content will be populated by API */}
+      Content will be populated by API
     </div>
   )
 
   const renderHazardAssessmentStep = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Hazard Assessment
-          </CardTitle>
-          <CardDescription>
-            Identify and assess potential hazards and risks for your tribal nation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {currentProposal?.hazardAssessments && currentProposal.hazardAssessments.length > 0 ? (
-            <div className="space-y-4">
-              {currentProposal.hazardAssessments.map((hazard, index) => (
-                <div key={index} className="border rounded-lg p-4 bg-muted/30">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Circle className="h-4 w-4" />
-                      {hazard.hazardType || `Hazard ${index + 1}`}
-                    </h4>
-                    <Badge variant={
-                      hazard.riskLevel === 'extreme' ? 'destructive' :
-                      hazard.riskLevel === 'high' ? 'destructive' :
-                      hazard.riskLevel === 'moderate' ? 'default' : 'secondary'
-                    }>
-                      {hazard.riskLevel || 'Unknown'} Risk
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground">Probability</Label>
-                      <p className="mt-1">{hazard.probability || 'Not specified'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground">Potential Impact</Label>
-                      <p className="mt-1">{hazard.potentialImpact || 'Not specified'}</p>
-                    </div>
-                  </div>
-                  {hazard.vulnerabilities && hazard.vulnerabilities.length > 0 && (
-                    <div className="mt-3">
-                      <Label className="text-xs font-medium text-muted-foreground">Vulnerabilities</Label>
-                      <ul className="text-sm list-disc list-inside mt-1 space-y-1">
-                        {hazard.vulnerabilities.map((vuln, vIndex) => (
-                          <li key={vIndex}>{vuln}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              <Button variant="outline" className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another Hazard
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Hazards Identified</h3>
-              <p className="text-muted-foreground mb-4">
-                Use the AI assistant to identify and assess potential hazards for your area.
-              </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Identify Hazards
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Content will be populated by API */}
+        Content will be populated by API
     </div>
   )
 
   const renderEmergencyResponseStep = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Emergency Response Plan
-          </CardTitle>
-          <CardDescription>
-            Develop comprehensive response procedures and protocols
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {currentProposal?.emergencyResponse ? (
-            <div className="space-y-6">
-              {currentProposal.emergencyResponse.procedures && currentProposal.emergencyResponse.procedures.length > 0 && (
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">Response Procedures</Label>
-                  <div className="space-y-2">
-                    {currentProposal.emergencyResponse.procedures.map((procedure, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{procedure}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" size="sm" className="mt-2">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Procedure
-                  </Button>
-                </div>
-              )}
-              
-              {currentProposal.emergencyResponse.communicationPlan && (
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Communication Plan</Label>
-                  <Textarea 
-                    value={currentProposal.emergencyResponse.communicationPlan} 
-                    readOnly={!editMode}
-                    className={editMode ? '' : 'bg-muted'}
-                    rows={4}
-                  />
-                </div>
-              )}
-              
-              {currentProposal.emergencyResponse.evacuationProcedures && (
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Evacuation Procedures</Label>
-                  <Textarea 
-                    value={currentProposal.emergencyResponse.evacuationProcedures} 
-                    readOnly={!editMode}
-                    className={editMode ? '' : 'bg-muted'}
-                    rows={4}
-                  />
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                {!editMode ? (
-                  <Button onClick={() => setEditMode(true)} variant="outline">
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    Edit Response Plan
-                  </Button>
-                ) : (
-                  <Button onClick={() => setEditMode(false)}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </Button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Response Plan</h3>
-              <p className="text-muted-foreground mb-4">
-                Work with the AI assistant to develop your emergency response procedures.
-              </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Response Plan
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        Content will be populated by API
     </div>
   )
 
