@@ -12,10 +12,10 @@ const FASTAPI_BASE_URL = process.env.NEXT_PUBLIC_FASTAPI_BASE_URL ||
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: { path: string[] } }
 ) {
   try {
-    const path = params.path?.join('/') || ''
+    const path = context.params.path?.join('/') || ''
     const url = new URL(request.url)
     const queryString = url.search
     const targetUrl = `${FASTAPI_BASE_URL}/${path}${queryString}`
@@ -55,10 +55,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: { path: string[] } }
 ) {
   try {
-    const path = params.path?.join('/') || ''
+    const path = context.params.path?.join('/') || ''
     const url = new URL(request.url)
     const queryString = url.search
     const targetUrl = `${FASTAPI_BASE_URL}/${path}${queryString}`
