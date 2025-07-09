@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 
 export default function TestBackendConnection() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const testHealth = async () => {
@@ -20,7 +20,7 @@ export default function TestBackendConnection() {
       }
       
       const data = await response.json()
-      setResult(data)
+      setResult(data as Record<string, unknown>)
       setStatus("success")
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -47,7 +47,7 @@ export default function TestBackendConnection() {
       }
       
       const data = await response.json()
-      setResult(data)
+      setResult(data as Record<string, unknown>)
       setStatus("success")
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

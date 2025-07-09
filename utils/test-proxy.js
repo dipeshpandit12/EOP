@@ -17,8 +17,8 @@ async function testProxy() {
       try {
         const errorText = await response.text();
         console.error(`Error details: ${errorText}`);
-      } catch (e) {
-        console.error('Could not read error details');
+      } catch (error) {
+        console.error('Could not read error details:', error);
       }
     }
   } catch (error) {
@@ -49,8 +49,8 @@ async function testProxy() {
       try {
         const errorText = await response.text();
         console.error(`Error details: ${errorText}`);
-      } catch (e) {
-        console.error('Could not read error details');
+      } catch (error) {
+        console.error('Could not read error details:', error);
       }
     }
   } catch (error) {

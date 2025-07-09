@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 // Use multiple sources for the FastAPI URL with proper fallbacks
 const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 
@@ -7,7 +7,7 @@ const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL ||
 
 console.log('[Test API] Using FastAPI URL:', FASTAPI_BASE_URL)
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   console.log('[Test API] Testing health endpoint...')
   
   try {
