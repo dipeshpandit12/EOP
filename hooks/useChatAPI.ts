@@ -1,5 +1,12 @@
 import { useState, useCallback } from 'react'
 
+// Determine which API endpoint to use:
+// In production (Vercel), use the proxy endpoint
+// In development, use the direct API endpoint
+const API_ENDPOINT = process.env.NODE_ENV === 'production' 
+  ? '/api/proxy/chat'  // Use proxy in production to avoid CORS issues
+  : '/api/chat';       // Use direct API route in development
+
 interface ChatMessage {
   id?: string
   message: string
@@ -53,7 +60,7 @@ export function useChatAPI() {
     }
 
     console.log('[useChatAPI] Sending request:', {
-      url: '/api/chat',
+      url: API_ENDPOINT,
       method: 'POST',
       data: requestData,
       timestamp: new Date().toISOString()
@@ -61,7 +68,7 @@ export function useChatAPI() {
 
     try {
       const startTime = Date.now()
-      const response = await fetch('/api/chat', {
+      const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,8 +95,30 @@ export function useChatAPI() {
           console.error('[useChatAPI] Error response body:', errorData)
         } catch (parseError) {
           console.error('[useChatAPI] Failed to parse error response:', parseError)
+          // Try to get text response if JSON parsing fails
+          try {
+            const errorText = await response.text();
+            errorDetail = errorText || errorDetail;
+            console.error('[useChatAPI] Error response text:', errorText);
+          } catch (textError) {
+            console.error('[useChatAPI] Failed to get error response text:', textError);
+          }
         }
-        throw new Error(`Failed to send message: ${errorDetail}`)
+        
+        // Provide specific error messages based on status code
+        if (response.status === 500) {
+          setError(`Error: API responded with status: ${response.status}. Please check that the FastAPI server is running on port 8000.`);
+          throw new Error(`Server error: The backend API returned a 500 Internal Server Error. Please check your server logs for more details.`);
+        } else if (response.status === 404) {
+          setError(`Error: API endpoint not found (404). Please check your backend API configuration.`);
+          throw new Error(`Not found: The backend API endpoint was not found. Please check your server configuration.`);
+        } else if (response.status === 403) {
+          setError(`Error: Access forbidden (403). Please check your authentication.`);
+          throw new Error(`Access forbidden: ${errorDetail}`);
+        } else {
+          setError(`Failed to send message: ${errorDetail}`);
+          throw new Error(`Failed to send message: ${errorDetail}`);
+        }
       }
 
       const result = await response.json()
@@ -101,7 +130,14 @@ export function useChatAPI() {
       
       return result
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
+      let errorMessage = err instanceof Error ? err.message : 'Failed to send message'
+      
+      // Add more specific error messages for common connection issues
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        errorMessage = "Network error: Unable to connect to the API. Please check that your FastAPI server is running and accessible."
+      } else if (err instanceof DOMException && err.name === 'AbortError') {
+        errorMessage = "Request timed out: The API took too long to respond. Please check your server status."
+      }
       
       console.error('[useChatAPI] Request failed:', {
         error: errorMessage,

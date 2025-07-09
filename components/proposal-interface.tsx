@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useEOPChat } from "@/hooks/useEOPChat"
-import { 
-  FileText, 
-  Clock, 
+import {
+  FileText,
+  Clock,
   AlertTriangle,
   MapPin,
   Shield,

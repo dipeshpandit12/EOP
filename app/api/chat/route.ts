@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 'http://localhost:8000'
+// Use multiple sources for the FastAPI URL with proper fallbacks
+const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 
+                        process.env.NEXT_PUBLIC_FASTAPI_BASE_URL || 
+                        'http://localhost:8000'
+
+console.log('[Chat API] Using FastAPI URL:', FASTAPI_BASE_URL)
 
 export async function POST(request: NextRequest) {
   const requestStart = Date.now()
@@ -24,6 +29,11 @@ export async function POST(request: NextRequest) {
     
     // Forward the request to FastAPI backend
     const fastApiStart = Date.now()
+    
+    // Add timeout to fetch to avoid hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+    
     const response = await fetch(`${FASTAPI_BASE_URL}/chat`, {
       method: 'POST',
       headers: {
@@ -33,8 +43,9 @@ export async function POST(request: NextRequest) {
           'Authorization': request.headers.get('authorization')!
         })
       },
-      body: JSON.stringify(body)
-    })
+      body: JSON.stringify(body),
+      signal: controller.signal
+    }).finally(() => clearTimeout(timeoutId));
 
     const fastApiEnd = Date.now()
     
