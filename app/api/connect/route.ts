@@ -190,10 +190,7 @@ export async function GET() {
       healthResponse.status = 'degraded';
     }
 
-    // Log the response for debugging
-    console.log('=== HEALTH RESPONSE ===');
-    console.log(JSON.stringify(healthResponse, null, 2));
-    console.log('=======================');
+    // Response is now ready to be sent
 
     return NextResponse.json(healthResponse);
 
