@@ -13,8 +13,7 @@ export default function Page() {
 
   const {
     getCurrentProposal,
-    getProposalProgress,
-    proposalConnected
+    getProposalProgress
   } = useEOPChat()
 
   // Test FastAPI connection on component mount
@@ -30,10 +29,14 @@ export default function Page() {
         if (response.ok) {
           try {
             const healthData = await response.json()
-            // Set status based on API server component health
-            setApiConnectionStatus(
-              healthData.components?.api_server?.status === 'ok' ? 'connected' : 'disconnected'
-            )
+            // Set status based on overall system health
+            if (healthData.status === 'healthy') {
+              console.log('System health verified: HEALTHY')
+              setApiConnectionStatus('connected')
+            } else {
+              console.log('System health issue:', healthData.status || 'Unknown error')
+              setApiConnectionStatus('disconnected')
+            }
           } catch (parseError) {
             console.error('Failed to parse health data:', parseError)
             setApiConnectionStatus('disconnected')
@@ -63,18 +66,18 @@ export default function Page() {
         {/* Connection Status */}
         <div className="flex items-center gap-2">
           <Badge 
-            variant={apiConnectionStatus === 'connected' && proposalConnected ? "default" : "destructive"} 
+            variant={apiConnectionStatus === 'connected' ? "default" : "destructive"} 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
             asChild
           >
             <Link href="/connect" title="View connection details">
-              {apiConnectionStatus === 'connected' && proposalConnected ? (
+              {apiConnectionStatus === 'connected' ? (
                 <Wifi className="h-3 w-3" />
               ) : (
                 <WifiOff className="h-3 w-3" />
               )}
               System {apiConnectionStatus === 'checking' ? 'Checking...' : 
-                     apiConnectionStatus === 'connected' && proposalConnected ? 'Connected' : 'Disconnected'}
+                     apiConnectionStatus === 'connected' ? 'Connected' : 'Disconnected'}
             </Link>
           </Badge>
         </div>
