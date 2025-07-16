@@ -1,8 +1,10 @@
 // Simple script to test backend connection
 async function testBackendConnection() {
-  const FASTAPI_URL = 'http://localhost:8000'
+  // Use environment variable or fallback to the ngrok URL
+  const FASTAPI_URL = process.env.FASTAPI_BASE_URL || 'https://holy-crab-known.ngrok-free.app'
   
   console.log('Testing FastAPI backend connection...')
+  console.log(`Using FastAPI URL: ${FASTAPI_URL}`)
   
   try {
     // Test health endpoint
