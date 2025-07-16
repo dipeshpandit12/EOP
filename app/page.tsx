@@ -21,9 +21,23 @@ export default function Page() {
   useEffect(() => {
     const testConnection = async () => {
       try {
-        const response = await fetch('/api/proposal', { method: 'GET' })
+        const response = await fetch('/api/connect', { 
+          method: 'GET',
+          // Add timeout to avoid hanging
+          signal: AbortSignal.timeout(5000)
+        })
+        
         if (response.ok) {
-          setApiConnectionStatus('connected')
+          try {
+            const healthData = await response.json()
+            // Set status based on API server component health
+            setApiConnectionStatus(
+              healthData.components?.api_server?.status === 'ok' ? 'connected' : 'disconnected'
+            )
+          } catch (parseError) {
+            console.error('Failed to parse health data:', parseError)
+            setApiConnectionStatus('disconnected')
+          }
         } else {
           setApiConnectionStatus('disconnected')
         }
@@ -59,8 +73,8 @@ export default function Page() {
               ) : (
                 <WifiOff className="h-3 w-3" />
               )}
-              FastAPI {apiConnectionStatus === 'checking' ? 'Checking...' : 
-                       apiConnectionStatus === 'connected' && proposalConnected ? 'Connected' : 'Disconnected'}
+              System {apiConnectionStatus === 'checking' ? 'Checking...' : 
+                     apiConnectionStatus === 'connected' && proposalConnected ? 'Connected' : 'Disconnected'}
             </Link>
           </Badge>
         </div>

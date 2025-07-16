@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 'http://localhost:8000'
+// Use environment variable with a fallback value that's appropriate for production
+const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || 'https://holy-crab-known.ngrok-free.app'
 
 export async function POST(request: NextRequest) {
   const requestStart = Date.now()
@@ -11,9 +12,9 @@ export async function POST(request: NextRequest) {
       headers: Object.fromEntries(request.headers.entries()),
       timestamp: new Date().toISOString()
     })
-    
+
     const body = await request.json()
-    
+
     console.log('[Chat API] Request body parsed:', {
       bodyKeys: Object.keys(body),
       fullBody: body, // Log the complete body to see what FastAPI is receiving
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       sessionId: body.session_id || body.sessionId, // Check both field names
       timestamp: new Date().toISOString()
     })
-    
+
     // Forward the request to FastAPI backend
     const fastApiStart = Date.now()
     const response = await fetch(`${FASTAPI_BASE_URL}/chat`, {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     })
 
     const fastApiEnd = Date.now()
-    
+
     console.log('[Chat API] FastAPI response:', {
       status: response.status,
       statusText: response.statusText,
