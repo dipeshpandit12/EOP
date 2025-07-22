@@ -5,16 +5,11 @@ import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useEOPChat } from "@/hooks/useEOPChat"
-import { ArrowRight, Heart, CheckCircle, Wifi, WifiOff, Bot } from "lucide-react"
+import { ArrowRight, Heart, Wifi, WifiOff, Bot } from "lucide-react"
 
 export default function Page() {
   const [apiConnectionStatus, setApiConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
 
-  const {
-    getCurrentProposal,
-    getProposalProgress
-  } = useEOPChat()
 
   // Test FastAPI connection on component mount
   useEffect(() => {
@@ -56,8 +51,6 @@ export default function Page() {
     return () => clearInterval(interval)
   }, [])
 
-  const currentProposal = getCurrentProposal()
-  const progress = getProposalProgress()
 
   return (
     <div className="min-h-svh bg-gradient-to-br from-background via-background to-muted/20">
@@ -70,7 +63,7 @@ export default function Page() {
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
             asChild
           >
-            <Link href="/connect" title="View connection details">
+            <Link href="api/connect" title="View connection details">
               {apiConnectionStatus === 'connected' ? (
                 <Wifi className="h-3 w-3" />
               ) : (
@@ -114,24 +107,6 @@ export default function Page() {
               </Button>
             </div>
 
-            {/* Progress indicator if there's an active proposal */}
-            {currentProposal && (
-              <div className="mt-8 p-4 bg-primary/10 rounded-lg border">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="font-medium">Active EOP in Progress</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {currentProposal.tribalNationInfo?.name || 'Your Proposal'} - {progress}% Complete
-                </div>
-                <Button variant="outline" size="sm" className="mt-3" asChild>
-                  <Link href="/dashboard">
-                    Continue Working
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>
