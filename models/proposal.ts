@@ -8,6 +8,7 @@ interface ProposalStatusSection {
 
 export interface IProposal extends Document {
   userId: string
+  email: string
   status: {
     information: ProposalStatusSection
     assessment: ProposalStatusSection
