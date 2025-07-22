@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Home, User, FileText, X, Database, ChevronLeft, ChevronRight } from "lucide-react"
+import { Home, User, FileText, X, Database, ChevronLeft, ChevronRight, LogOut } from "lucide-react"
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -14,25 +14,38 @@ interface SidebarProps {
   onToggleCollapse?: () => void
 }
 
+
 export function Sidebar({ onClose, onHistoryClick, onProfileClick, isCollapsed = false, onToggleCollapse }: SidebarProps) {
-  const pathname = usePathname()
-  
+  const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch {
+      window.location.href = "/login";
+    }
+  };
+
   const handleItemClick = (item: string, href: string) => {
     if (item === "History") {
-      onHistoryClick()
+      onHistoryClick();
     } else if (item === "Profile") {
-      onProfileClick()
+      onProfileClick();
+    } else if (item === "Logout") {
+      handleLogout();
     } else if (href !== "#") {
-      window.location.href = href
+      window.location.href = href;
     }
-  }
+  };
 
   const menuItems = [
     { icon: Home, label: "Dashboard", href: "/dashboard", active: pathname === "/dashboard" },
     { icon: FileText, label: "History", href: "#", active: false },
     { icon: User, label: "Profile", href: "#", active: false },
     { icon: Database, label: "Connection Status", href: "/connect", active: pathname === "/connect" },
-  ]
+    { icon: LogOut, label: "Logout", href: "#", active: false },
+  ];
 
   return (
     <div className={`flex flex-col h-full bg-card border-r transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
@@ -106,5 +119,5 @@ export function Sidebar({ onClose, onHistoryClick, onProfileClick, isCollapsed =
         </div>
       </div>
     </div>
-  )
+  );
 }
