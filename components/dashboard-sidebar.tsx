@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Home, User, FileText, X, Database, ChevronLeft, ChevronRight, LogOut } from "lucide-react"
+import { Home, User, FileText, X, ChevronLeft, ChevronRight, LogOut } from "lucide-react"
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
