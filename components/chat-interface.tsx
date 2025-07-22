@@ -30,6 +30,23 @@ export function ChatInterface() {
   const [messageCounter, setMessageCounter] = useState(1)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+  const existingId = localStorage.getItem('session_id')
+  if (existingId) {
+    setSessionId(existingId)
+  } else {
+    const dynamicSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    setSessionId(dynamicSessionId)
+    localStorage.setItem('session_id', dynamicSessionId)
+
+    fetch('/api/proposal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: dynamicSessionId })
+    })
+  }
+}, [])
+
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
@@ -42,13 +59,6 @@ export function ChatInterface() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
-  // Generate session ID after component mounts to avoid SSR mismatch
-  useEffect(() => {
-    // Generate unique session ID only on client side
-    const dynamicSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    setSessionId(dynamicSessionId)
-  }, [])
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -67,7 +77,7 @@ export function ChatInterface() {
     setIsTyping(true)
 
     try {
-      // Make API call to your FastAPI backend
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -102,11 +112,11 @@ export function ChatInterface() {
       console.error('Chat error:', error)
       
       const errorMessage: Message = {
-        id: `error-${messageCounter}`,
-        content: `Sorry, I'm having trouble connecting to the server. Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check that the FastAPI server is running on port 8000.`,
-        sender: "bot",
-        timestamp: new Date(),
-      }
+  id: `error-${messageCounter}`,
+  content: `Sorry, I'm having trouble connecting to the server. Error: ${error instanceof Error ? error.message : 'Unknown error'}.`,
+  sender: "bot",
+  timestamp: new Date(),
+}
       
       setMessages((prev) => [...prev, errorMessage])
       setMessageCounter(prev => prev + 1)

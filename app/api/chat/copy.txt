@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from 'next/server'
+import ProposalModel from '@/models/proposal'
+import RulesBankModel from '@/models/rulesBank'
+import { dbConnect } from '@/lib/db'
+import { generateGeminiResponse } from '@/lib/gemini'
+
+interface Rule {
+  rule: string;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    await dbConnect();
+    const body = await request.json()
+    const { session_id, message } = body
+
+    const proposal = await ProposalModel.findOne({ userId: session_id })
+
+    if (!proposal) {
+      return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
+    }
+
+    // Ensure RulesBank exists
+    let rulesBank = await RulesBankModel.findOne()
+    if (!rulesBank) {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/updateRules`, { method: 'POST' })
+      rulesBank = await RulesBankModel.findOne()
+    }
+
+    const sections = ['information', 'assessment', 'responsePlan', 'review']
+    const currentSection = sections.find(s => !proposal.status[s]?.completed)
+
+    if (!currentSection) {
+      return NextResponse.json({
+        response: "✅ All sections completed. You can now review and finalize your EOP.",
+        session_id,
+        status: 'done'
+      })
+    }
+
+    const currentResponses = proposal.status[currentSection].responses || {};
+    // Use the Rule interface here
+    const sectionRules: Rule[] = rulesBank[currentSection] || [];
+
+    // Now idx is typed as number and _ as Rule
+    const unansweredIndex = sectionRules.findIndex((_: Rule, idx: number) => !currentResponses[`q_${idx + 1}`]);
+
+    let botReply = '';
+
+    if (unansweredIndex === -1) {
+      const lastKey = `q_${Object.keys(currentResponses).length}`;
+      proposal.status[currentSection].responses[lastKey] = message;
+      proposal.status[currentSection].completed = true;
+      proposal.status[currentSection].generatedText = `✅ Section "${currentSection}" completed.`;
+      await proposal.save();
+
+      return NextResponse.json({
+        response: `✅ You've completed the "${currentSection}" section. Moving to the next section...`,
+        session_id,
+        status: 'section_completed'
+      });
+    } else {
+      if (Object.keys(currentResponses).length > 0) {
+        const lastKey = `q_${Object.keys(currentResponses).length}`;
+        proposal.status[currentSection].responses[lastKey] = message;
+      }
+
+      const nextRuleText = sectionRules[unansweredIndex]?.rule || "Please provide the next response.";
+      botReply = await generateGeminiResponse(
+        `Please help the user respond to this: "${nextRuleText}"`
+      );
+    }
+
+    proposal.lastUpdated = new Date();
+    await proposal.save();
+
+    return NextResponse.json({ response: botReply, session_id, status: 'success' });
+
+  } catch (error) {
+    console.error("Chat error:", error);
+    return NextResponse.json({
+      response: '',
+      status: 'error',
+      message: 'Failed to process chat request.'
+    }, { status: 500 });
+  }
+}

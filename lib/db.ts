@@ -1,28 +1,29 @@
-import mongoose, { Schema, model, models } from "mongoose";
 
-const userSchema = new Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
+import mongoose from 'mongoose'
 
-const UserModel = models.User || model("User", userSchema);
+const MONGODB_URI = process.env.MONGODB_URI!
 
-export async function createUser({ email, password }: { email: string; password: string }) {
-  await mongoose.connect(process.env.MONGODB_URI!);
-  const user = new UserModel({ email, password });
-  await user.save();
-  return user._id;
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable')
 }
 
-export async function findUserByEmail(email: string) {
-  await mongoose.connect(process.env.MONGODB_URI!);
-  return UserModel.findOne({ email });
+type MongooseCache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
+let cached: MongooseCache = (global as { mongoose?: MongooseCache }).mongoose as MongooseCache;
+
+if (!cached) {
+  (global as { mongoose?: MongooseCache }).mongoose = { conn: null, promise: null }
+  cached = (global as { mongoose?: MongooseCache }).mongoose as MongooseCache
 }
 
-const userModel = {
-  createUser,
-  findUserByEmail,
-};
+export async function dbConnect() {
+  if (cached.conn) return cached.conn
 
-export default userModel;
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    })
+  }
+
+  cached.conn = await cached.promise
+  return cached.conn
+}
