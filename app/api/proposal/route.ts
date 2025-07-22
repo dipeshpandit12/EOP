@@ -1,36 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
+import ProposalModel from '@/models/proposal'
+import { dbConnect } from '@/lib/db'
 
-// Demo healthy structure for proposals
-const healthyDemo = {
-  proposals: [],
-  lastUpdated: new Date().toISOString(),
-  status: 'healthy',
-  message: 'Demo stream success'
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get('session_id')
+  if (!sessionId) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
+
+  const proposal = await ProposalModel.findOne({ userId: sessionId })
+  if (!proposal) return NextResponse.json({ message: 'Not found' }, { status: 404 })
+
+  return NextResponse.json(proposal)
 }
 
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url)
-  const isStream = url.searchParams.get('stream') === 'true'
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { session_id } = body;
+  await dbConnect();
 
-  if (isStream) {
-    // Always send a healthy demo structure for demo success
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(`data: ${JSON.stringify(healthyDemo)}\n\n`)
-        controller.close()
-      }
-    })
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      }
+  let proposal = await ProposalModel.findOne({ userId: session_id })
+  if (!proposal) {
+    proposal = await ProposalModel.create({
+      userId: session_id,
+      status: {
+        information: { completed: false, generatedText: null, responses: {} },
+        assessment: { completed: false, generatedText: null, responses: {} },
+        responsePlan: { completed: false, generatedText: null, responses: {} },
+        review: { completed: false, finalGeneratedEOP: null }
+      },
+      createdAt: new Date(),
+      lastUpdated: new Date()
     })
   }
 
-  // Regular GET request for current proposal data
-  return NextResponse.json(healthyDemo)
+  return NextResponse.json(proposal)
 }
