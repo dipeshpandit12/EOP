@@ -51,13 +51,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Second Column - Proposal Interface */}
-        <div className="flex-1 lg:flex-1 lg:border-r overflow-hidden">
-          <ProposalInterface />
-        </div>
-
-        {/* Third Column - Chat Interface */}
-        <div className="flex-1 lg:flex-1 lg:max-w-md xl:max-w-lg overflow-hidden">
-          <ChatInterface />
+        <div className="flex-1 lg:flex-1 overflow-hidden flex">
+          <div className="flex-1">
+            <ProposalInterface />
+          </div>
+          {/* Vertical divider for desktop */}
+          <div className="hidden lg:block w-px bg-border h-auto self-stretch" />
+          <div className="flex-1 lg:max-w-md xl:max-w-lg">
+            <ChatInterface />
+          </div>
         </div>
       </div>
 
