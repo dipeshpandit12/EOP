@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Home, User, FileText, X, Database, ChevronLeft, ChevronRight, LogOut } from "lucide-react"
+import { Home, User, FileText, X, ChevronLeft, ChevronRight, LogOut } from "lucide-react"
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -43,7 +43,6 @@ export function Sidebar({ onClose, onHistoryClick, onProfileClick, isCollapsed =
     { icon: Home, label: "Dashboard", href: "/dashboard", active: pathname === "/dashboard" },
     { icon: FileText, label: "History", href: "#", active: false },
     { icon: User, label: "Profile", href: "#", active: false },
-    { icon: Database, label: "Connection Status", href: "/connect", active: pathname === "/connect" },
     { icon: LogOut, label: "Logout", href: "#", active: false },
   ];
 
