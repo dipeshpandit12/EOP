@@ -21,6 +21,7 @@
     "dotenv": "^17.2.0",
     "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.1",
     "lucide-react": "^0.516.0",
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.4",
