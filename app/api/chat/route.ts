@@ -125,6 +125,26 @@ if (!valid) {
   })
 }
 
+// ✅ Save user response in proposal.status[currentSection].responses
+if (!proposal.status[currentSection].responses) {
+  proposal.status[currentSection].responses = [];
+}
+proposal.status[currentSection].responses[lastRuleIndexAsked] = message;
+
+// Optionally, extract and save key info (simple: first 200 chars)
+interface ExtractKeyInfo {
+  (text: string): string;
+}
+
+const extractKeyInfo: ExtractKeyInfo = function(text: string): string {
+  // Replace with AI/advanced logic if needed
+  return text.length > 200 ? text.slice(0, 200) + '...' : text;
+};
+proposal.status[currentSection].keyInfo = extractKeyInfo(message);
+proposal.markModified(`status.${currentSection}.responses`);
+proposal.markModified(`status.${currentSection}.keyInfo`);
+await proposal.save();
+
 // ✅ Mark this rule as asked
 sectionRules[lastRuleIndexAsked].asked = true
 rulesBank.markModified(currentSection)

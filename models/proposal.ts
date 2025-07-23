@@ -1,9 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose'
 
 interface ProposalStatusSection {
-  completed: boolean
-  generatedText?: string | null
-  lastRuleIndexAsked?: number
+  completed: boolean;
+  generatedText?: string | null;
+  lastRuleIndexAsked?: number;
+  responses?: string[];
+  keyInfo?: string | null;
 }
 
 export interface IProposal extends Document {
@@ -25,7 +27,9 @@ export interface IProposal extends Document {
 const SectionSchema: Schema = new Schema({
   completed: { type: Boolean, required: true },
   generatedText: { type: String, default: null },
-  lastRuleIndexAsked: { type: Number, default: -1 }
+  lastRuleIndexAsked: { type: Number, default: -1 },
+  responses: { type: [String], default: [] },
+  keyInfo: { type: String, default: null }
 })
 
 

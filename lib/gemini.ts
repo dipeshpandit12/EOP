@@ -1,4 +1,7 @@
-// lib/gemini.ts
+// Helper for proposal introduction
+export async function generateGeminiIntroduction(prompt: string): Promise<string> {
+  return generateGeminiResponse(prompt);
+}
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
