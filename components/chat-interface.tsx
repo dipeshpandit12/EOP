@@ -27,6 +27,18 @@ export function ChatInterface() {
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [sessionId, setSessionId] = useState("session-loading") // Initial static value
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const existingId = localStorage.getItem('session_id');
+    if (existingId) {
+      setSessionId(existingId);
+    } else {
+      const dynamicSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setSessionId(dynamicSessionId);
+      localStorage.setItem('session_id', dynamicSessionId);
+    }
+  }, []);
   const [messageCounter, setMessageCounter] = useState(1)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
@@ -43,12 +55,7 @@ export function ChatInterface() {
     scrollToBottom()
   }, [messages])
 
-  // Generate session ID after component mounts to avoid SSR mismatch
-  useEffect(() => {
-    // Generate unique session ID only on client side
-    const dynamicSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    setSessionId(dynamicSessionId)
-  }, [])
+  // (Session ID persistence now handled above)
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -163,13 +170,7 @@ export function ChatInterface() {
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  {message.showGenerateButton && (
-                    <div className="mt-3 flex justify-end">
-                      <Button size="sm" variant="default" onClick={() => alert('Generate action!')}>
-                        Generate
-                      </Button>
-                    </div>
-                  )}
+                  {/* Generate button removed as requested */}
                   <p className="text-xs opacity-70 mt-1">
                     {message.timestamp.getHours().toString().padStart(2, '0')}:
                     {message.timestamp.getMinutes().toString().padStart(2, '0')}

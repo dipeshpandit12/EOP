@@ -8,10 +8,80 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { FileText, Clock, AlertTriangle, MapPin, Shield} from "lucide-react"
 
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
 
 export function ProposalInterface({ className }: { className?: string }) {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Per-step generated text and loading state
+  const [stepData, setStepData] = useState<{
+    [key: string]: { text: string | null; loading: boolean }
+  }>({
+    information: { text: null, loading: false },
+    hazard: { text: null, loading: false },
+    response: { text: null, loading: false },
+  });
+  const [finalLoading, setFinalLoading] = useState(false);
+  const [finalPdfUrl, setFinalPdfUrl] = useState<string | null>(null);
+
+  // Step keys for API
+  const stepKeys = ["information", "hazard", "response"];
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const existingId = localStorage.getItem('session_id');
+    if (existingId) {
+      setSessionId(existingId);
+    } else {
+      const dynamicSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setSessionId(dynamicSessionId);
+      localStorage.setItem('session_id', dynamicSessionId);
+    }
+  }, []);
+
+  // Generate handler for each step
+  const handleGenerateStep = async (step: string) => {
+    if (!sessionId) return;
+    setStepData(prev => ({ ...prev, [step]: { ...prev[step], loading: true } }));
+    try {
+      const res = await fetch('/api/generate_proposal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, step })
+      });
+      const data = await res.json();
+      setStepData(prev => ({ ...prev, [step]: { text: data.generatedText || 'Failed to generate.', loading: false } }));
+    } catch {
+      setStepData(prev => ({ ...prev, [step]: { text: 'Failed to generate.', loading: false } }));
+    }
+  };
+
+  // Check if all steps are generated
+  const allStepsComplete = stepKeys.every(key => stepData[key]?.text);
+
+  // Generate final EOP PDF
+  const handleGenerateFinalEOP = async () => {
+    if (!sessionId || !allStepsComplete) return;
+    setFinalLoading(true);
+    setFinalPdfUrl(null);
+    try {
+      // Collect all generated texts
+      const sections = stepKeys.map(key => stepData[key]?.text || '').join('\n\n');
+      // Call backend to generate PDF (implement /api/generate_pdf)
+      const res = await fetch('/api/generate_pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, content: sections })
+      });
+      const data = await res.json();
+      if (data.pdfUrl) setFinalPdfUrl(data.pdfUrl);
+    } catch {
+      setFinalPdfUrl(null);
+    } finally {
+      setFinalLoading(false);
+    }
+  };
 
   // Step data for UI
   const steps = [
@@ -20,6 +90,7 @@ export function ProposalInterface({ className }: { className?: string }) {
       icon: MapPin,
       label: "Tribal Nation Information",
       description: "Basic information about your tribal nation and government structure",
+      key: "information",
       content: (
         <Card>
           <CardHeader>
@@ -30,6 +101,17 @@ export function ProposalInterface({ className }: { className?: string }) {
             <CardDescription>
               Basic information about your tribal nation and government structure
             </CardDescription>
+            {/* Generate Button and Display */}
+            <div className="mt-4">
+              <Button onClick={() => handleGenerateStep('information')} disabled={stepData.information.loading || !!stepData.information.text} size="sm">
+                {stepData.information.loading ? 'Generating...' : stepData.information.text ? 'Generated' : 'Generate Introduction'}
+              </Button>
+            </div>
+            {stepData.information.text && (
+              <div className="mt-4 p-3 bg-muted rounded text-sm whitespace-pre-line border">
+                {stepData.information.text}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-muted-foreground">
@@ -46,6 +128,7 @@ export function ProposalInterface({ className }: { className?: string }) {
       icon: AlertTriangle,
       label: "Hazard Assessment",
       description: "Identify and assess potential hazards and risks",
+      key: "hazard",
       content: (
         <Card>
           <CardHeader>
@@ -56,6 +139,16 @@ export function ProposalInterface({ className }: { className?: string }) {
             <CardDescription>
               Identify and assess potential hazards and risks
             </CardDescription>
+            <div className="mt-4">
+              <Button onClick={() => handleGenerateStep('hazard')} disabled={stepData.hazard.loading || !!stepData.hazard.text} size="sm">
+                {stepData.hazard.loading ? 'Generating...' : stepData.hazard.text ? 'Generated' : 'Generate Hazard Assessment'}
+              </Button>
+            </div>
+            {stepData.hazard.text && (
+              <div className="mt-4 p-3 bg-muted rounded text-sm whitespace-pre-line border">
+                {stepData.hazard.text}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-muted-foreground">
@@ -71,6 +164,7 @@ export function ProposalInterface({ className }: { className?: string }) {
       icon: Shield,
       label: "Emergency Response Plan",
       description: "Develop response procedures and protocols",
+      key: "response",
       content: (
         <Card>
           <CardHeader>
@@ -81,6 +175,16 @@ export function ProposalInterface({ className }: { className?: string }) {
             <CardDescription>
               Develop response procedures and protocols
             </CardDescription>
+            <div className="mt-4">
+              <Button onClick={() => handleGenerateStep('response')} disabled={stepData.response.loading || !!stepData.response.text} size="sm">
+                {stepData.response.loading ? 'Generating...' : stepData.response.text ? 'Generated' : 'Generate Response Plan'}
+              </Button>
+            </div>
+            {stepData.response.text && (
+              <div className="mt-4 p-3 bg-muted rounded text-sm whitespace-pre-line border">
+                {stepData.response.text}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-muted-foreground">
@@ -96,6 +200,7 @@ export function ProposalInterface({ className }: { className?: string }) {
       icon: FileText,
       label: "Review & Finalize",
       description: "Review all sections and finalize your EOP",
+      key: "review",
       content: (
         <Card>
           <CardHeader>
@@ -118,9 +223,9 @@ export function ProposalInterface({ className }: { className?: string }) {
                     <p className="text-sm text-muted-foreground">Basic information about your tribal nation and government structure</p>
                   </div>
                 </div>
-                <Badge variant="secondary">
+                <Badge variant={stepData.information.text ? "default" : "secondary"}>
                   <Clock className="h-3 w-3 mr-1" />
-                  Incomplete
+                  {stepData.information.text ? 'Complete' : 'Incomplete'}
                 </Badge>
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -131,9 +236,9 @@ export function ProposalInterface({ className }: { className?: string }) {
                     <p className="text-sm text-muted-foreground">Identify and assess potential hazards and risks</p>
                   </div>
                 </div>
-                <Badge variant="secondary">
+                <Badge variant={stepData.hazard.text ? "default" : "secondary"}>
                   <Clock className="h-3 w-3 mr-1" />
-                  Incomplete
+                  {stepData.hazard.text ? 'Complete' : 'Incomplete'}
                 </Badge>
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -144,26 +249,31 @@ export function ProposalInterface({ className }: { className?: string }) {
                     <p className="text-sm text-muted-foreground">Develop response procedures and protocols</p>
                   </div>
                 </div>
-                <Badge variant="secondary">
+                <Badge variant={stepData.response.text ? "default" : "secondary"}>
                   <Clock className="h-3 w-3 mr-1" />
-                  Incomplete
+                  {stepData.response.text ? 'Complete' : 'Incomplete'}
                 </Badge>
               </div>
               <div className="pt-4 border-t">
-                <Button className="w-full" disabled>
+                <Button className="w-full" onClick={handleGenerateFinalEOP} disabled={!allStepsComplete || finalLoading}>
                   <FileText className="h-4 w-4 mr-2" />
-                  Generate Final EOP Document
+                  {finalLoading ? 'Generating PDF...' : 'Generate Final EOP Document'}
                 </Button>
-                <p className="text-sm text-muted-foreground text-center mt-2">
-                  Complete all sections to generate the final document
-                </p>
+                {finalPdfUrl && (
+                  <a href={finalPdfUrl} download className="block mt-2 text-center text-primary underline">Download EOP PDF</a>
+                )}
+                {!allStepsComplete && (
+                  <p className="text-sm text-muted-foreground text-center mt-2">
+                    Complete all sections to generate the final document
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       )
     }
-  ]
+  ];
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
