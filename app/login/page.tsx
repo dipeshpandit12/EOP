@@ -1,6 +1,6 @@
 
 "use client"
-
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +89,15 @@ export default function LoginPage() {
           {success && <p className="text-sm text-green-600 text-center">{success}</p>}
           <Button type="submit" className="w-full mt-2" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}
+          </Button>
+          <Button
+            type="button"
+            className="w-full mt-2"
+            variant="outline"
+            disabled={loading}
+            onClick={() => { router.push('/signup'); }}
+          >
+            Sign Up
           </Button>
         </form>
         <p className="text-xs text-muted-foreground mt-6 text-center">
