@@ -7,9 +7,9 @@ const ruleListSchema = new Schema({
 
 const rulesBankSchema = new Schema({
   information: { type: [ruleListSchema], default: [] },
-  Assessment: { type: [ruleListSchema], default: [] },
-  ResponsePlan: { type: [ruleListSchema], default: [] },
-  Review: { type: [ruleListSchema], default: [] },
+  assessment: { type: [ruleListSchema], default: [] },
+  responsePlan: { type: [ruleListSchema], default: [] },
+  review: { type: [ruleListSchema], default: [] },
 }, { timestamps: true });
 
 const RulesBankModel = models.RulesBank || model("RulesBank", rulesBankSchema);
@@ -23,17 +23,17 @@ export const demoRulesBank = {
     { rule: "Primary contact must have a valid email address." },
     { rule: "Facility address should be complete and up to date." }
   ],
-  Assessment: [
+  assessment: [
     { rule: "Risk assessment must be conducted annually." },
     { rule: "All identified risks should be documented." },
     { rule: "Assessment results must be reviewed by management." }
   ],
-  ResponsePlan: [
+  responsePlan: [
     { rule: "A written emergency response plan is required." },
     { rule: "Plan must be updated after every major incident." },
     { rule: "All staff must be trained on the response plan." }
   ],
-  Review: [
+  review: [
     { rule: "Plans and assessments must be reviewed every 6 months." },
     { rule: "Review findings should be documented and shared." }
   ]
