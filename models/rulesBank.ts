@@ -19,9 +19,12 @@ export default RulesBankModel;
 // Demo rules for each section
 export const demoRulesBank = {
   information: [
-    { rule: "Organization name must be provided." },
-    { rule: "Primary contact must have a valid email address." },
-    { rule: "Facility address should be complete and up to date." }
+    { rule: "Are you requesting a Major Disaster declaration or an Emergency declaration for this event?" },
+    { rule: "What type of disaster occurred, and what dates did the incident happen?" },
+    { rule: "Which specific tribal lands or areas were affected by the disaster?" },
+    { rule: "Were there any fatalities, injuries, or missing persons as a result of the event?" },
+    { rule: "Has the Tribal Chief Executive declared a state of emergency? If yes, when and for what areas?" },
+    { rule: "Was the Tribal Emergency Plan activated in response to this disaster?" },
   ],
   assessment: [
     { rule: "Risk assessment must be conducted annually." },
