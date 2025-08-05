@@ -75,7 +75,7 @@ export function ChatInterface() {
 
     try {
       // Make API call to your FastAPI backend
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/chat-wrapper', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
